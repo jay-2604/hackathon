@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            background: linear-gradient(135deg, #ff00cc, #333399);
+            color: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        /* Top Navbar */
+        nav {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+        .signup-btn {
+            background: #ff00cc;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .signup-btn:hover {
+            background: white;
+            color: #ff00cc;
+        }
+        /* Layout */
+        .layout {
+            flex: 1;
+            display: flex;
+            height: 100%;
+        }
+        /* Sidebar */
+        .sidebar {
+            width: 200px;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .nav-btn {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #ff00cc;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: left;
+        }
+        .nav-btn:hover {
+            background: white;
+            color: #ff00cc;
+        }
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .card {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 30px;
+            border-radius: 10px;
+            width: 300px;
+            text-align: center;
+            z-index: 1;
+        }
+        h2 {
+            margin-bottom: 20px;
+            font-weight: 800;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: 600;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: none;
+            border-radius: 5px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #ff00cc;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: white;
+            color: #ff00cc;
+        }
+        a {
+            display: inline-block;
+            width: 100%;
+            padding: 10px;
+            background: #ff00cc;
+            border-radius: 5px;
+            color: white;
+            font-weight: 700;
+            text-decoration: none;
+            text-align: center;
+            margin-top: 10px;
+        }
+        a:hover {
+            background: white;
+            color: #ff00cc;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Top Navbar -->
+<nav>
+    <div class="logo">Quiz Time</div>
+<!--    <a href="signup.html" class="signup-btn">Sign Up</a>-->
+</nav>
+
+<!-- Layout -->
+<div class="layout">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <button class="nav-btn" onclick="window.location.href='profile.html'">Profile</button>
+        <button class="nav-btn" onclick="window.location.href='leaderboard.html'">Leaderboard</button>
+        <button class="nav-btn" onclick="window.location.href='start.html'">Start Exam</button>
+        <button class="nav-btn" onclick="window.location.href='home.html'">Logout</button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="result-box" id="leaderboardTable">
+            <table style="width:100%; border-collapse:collapse; margin-top:12px;">
+                <thead>
+                    <tr style="background:#030c00; text-align:left;">
+                        <th style="padding:8px;">Rank</th>
+                        <th style="padding:8px;">Name</th>
+                        <th style="padding:8px;">Student ID</th>
+                        <th style="padding:8px;">Topic</th>
+                        <th style="padding:8px;">Marks</th>
+                        <th style="padding:8px;">Percentage</th>
+                        <th style="padding:8px;">Submitted</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboardBody"></tbody>
+            </table>
+        </div>
+</div>
+
+</body>
+</html>

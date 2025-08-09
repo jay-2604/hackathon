@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>AI Quiz Hub — Topic-wise Quizzes with Live Leaderboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --blue: #0b63d8;
+    --red: #d01818;
+    --bg: #f5f8ff;
+    --card: #ffffff;
+    --muted: #666;
+  }
+  *{box-sizing:border-box}
+  body{
+    font-family: 'Inter', system-ui, Arial;
+    margin:0;
+    background: linear-gradient(180deg,#f8fbff,#eef4ff);
+    color:#111;
+    padding:20px;
+  }
+
+  header{
+    background:linear-gradient(90deg,var(--red),var(--blue));
+    color:#fff;
+    padding:22px;
+    border-radius:12px;
+    text-align:center;
+    font-weight:800;
+    letter-spacing:3px;
+    font-size:20px;
+    text-transform:uppercase;
+    box-shadow:0 8px 24px rgba(11,99,216,0.12);
+  }
+
+  .layout{
+    max-width:1100px;
+    margin:18px auto;
+    display:grid;
+    grid-template-columns: 1fr 360px;
+    gap:18px;
+  }
+
+  .card{
+    background:var(--card);
+    padding:18px;
+    border-radius:12px;
+    box-shadow:0 10px 30px rgba(20,30,80,0.06);
+  }
+
+  .sidebar .card{position:sticky; top:24px;}
+
+  h2 { margin:6px 0 12px; font-size:18px; text-transform:uppercase; color:var(--blue); font-weight:800; letter-spacing:1px; }
+  label{display:block; font-size:13px; color:var(--muted); margin-bottom:6px;}
+  input[type="text"]{width:100%; padding:10px; margin-bottom:12px; border-radius:8px; border:1px solid #e6eefc; background:#fbfdff}
+  select{width:100%; padding:10px; border-radius:8px; border:1px solid #e6eefc; margin-bottom:12px}
+
+  .topics{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px}
+  .topic-btn{padding:8px 12px; border-radius:8px; border:none; cursor:pointer; background:#f0f6ff; color:var(--blue); font-weight:600}
+  .topic-btn.active{background:linear-gradient(90deg,var(--red),var(--blue)); color:#fff; box-shadow:0 6px 18px rgba(11,99,216,0.14)}
+
+  .question-area p{font-weight:600}
+  .options{margin-top:8px; display:flex; flex-direction:column; gap:8px}
+  .option{padding:10px; border-radius:8px; border:1px solid #eef6ff; background:#fbfdff; cursor:pointer}
+  .option.selected{border-color:var(--blue); background:#eef6ff}
+
+  .controls{display:flex; gap:10px; margin-top:14px}
+  button.primary{background:var(--blue); color:#fff; padding:10px 12px; border-radius:8px; border:none; cursor:pointer; font-weight:700}
+  button.ghost{background:transparent; border:1px solid #dfecff; padding:10px 12px; border-radius:8px; cursor:pointer}
+
+  .timer{font-weight:800; color:var(--red); font-size:16px}
+  .small{font-size:13px; color:var(--muted)}
+
+  .leaderboard{max-height:380px; overflow:auto}
+  .lb-item{display:flex; justify-content:space-between; padding:8px 6px; border-bottom:1px dashed #f0f4ff}
+  .lb-item strong{color:var(--blue)}
+
+  .result-box{padding:12px; border-radius:8px; background: linear-gradient(90deg,#fff,#f7fbff); border:1px solid #e9f2ff; margin-top:12px}
+
+  footer{margin-top:18px; text-align:center; color:var(--muted); font-size:13px}
+  @media(max-width:980px){
+    .layout{grid-template-columns:1fr; padding:0}
+    .sidebar{order:-1}
+  }
+</style>
+</head>
+<body>
+
+<header>AI Quiz Hub — Topicwise Quizzes & Live Leaderboard</header>
+
+<div class="layout">
+  <main class="card">
+    <h2>Start Quiz</h2>
+    <div>
+      <label>Student Name</label>
+      <input id="name" type="text" placeholder="Your full name" />
+      <label>Student ID</label>
+      <input id="sid" type="text" placeholder="ID / Roll no" />
+      <label>Select Topic</label>
+      <select id="topicSelect">
+        <option value="" disabled selected>Choose a topic</option>
+        <option value="python_basics">Python Basics</option>
+        <option value="js_basics">JavaScript Basics</option>
+        <option value="data_structures">Data Structures</option>
+        <option value="ai_intro">AI / ML Intro</option>
+      </select>
+
+      <div style="display:flex; gap:10px; align-items:center; margin-bottom:8px">
+        <div>
+          <label>Quiz Time (minutes)</label>
+          <input id="quizTime" type="text" value="5" style="width:90px; padding:8px; border-radius:6px; border:1px solid #eaf0ff"/>
+        </div>
+        <div style="margin-left:auto;">
+          <label>Per-question (sec)</label>
+          <input id="qTime" type="text" value="30" style="width:90px; padding:8px; border-radius:6px; border:1px solid #eaf0ff"/>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:8px; margin-bottom:12px">
+        <button class="primary" id="startBtn">Start Quiz</button>
+        <button class="ghost" id="genAIbtn" title="Generate questions via AI (requires backend)">Generate AI Questions</button>
+      </div>
+    </div>
+
+    <div id="quizArea" style="display:none; margin-top:12px" class="question-area card">
+      <div style="display:flex; justify-content:space-between; align-items:center">
+        <div>
+          <div class="small">Topic: <span id="currentTopic" style="font-weight:700"></span></div>
+          <div class="small">Student: <span id="currentStudent" style="font-weight:700"></span></div>
+        </div>
+        <div style="text-align:right">
+          <div class="timer" id="globalTimer">00:00</div>
+          <div class="small">Time left</div>
+        </div>
+      </div>
+
+      <hr style="margin:12px 0; border:none; border-top:1px solid #f0f5ff"/>
+
+      <div id="questionBlock">
+        <!-- question injected here -->
+      </div>
+
+      <div class="controls">
+        <div class="small">Question <span id="qIndex">0</span> / <span id="qTotal">0</span></div>
+        <div style="margin-left:auto" class="small">Q timer: <span id="qTimer">00</span>s</div>
+      </div>
+
+      <div style="display:flex; gap:8px; margin-top:12px">
+        <button class="ghost" id="prevBtn">Previous</button>
+        <button class="ghost" id="nextBtn">Next</button>
+        <button class="primary" id="submitBtn" style="margin-left:auto">Submit Quiz</button>
+      </div>
+
+      <div id="resultBox" class="result-box" style="display:none;margin-top:12px"></div>
+    </div>
+  </main>
+
+  <aside class="sidebar">
+    <div class="card">
+      <h2>Live Leaderboard</h2>
+      <div class="small">Top scores for selected topic (realtime)</div>
+      <div style="height:12px"></div>
+      <div id="leaderboard" class="leaderboard">
+        <!-- leaderboard entries -->
+      </div>
+      <div class="small" style="margin-top:10px">Scores update in realtime from Firebase</div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h2>Notes / How it works</h2>
+      <ul class="small">
+        <li>Pick a topic → Start Quiz (or first generate AI questions)</li>
+        <li>Global timer + per-question timer — auto-next / auto-submit on expiry</li>
+        <li>On submit, score is pushed to Firebase → leaderboard updates for everyone</li>
+        <li>The "Generate AI Questions" button is a hook — plug to your AI backend</li>
+      </ul>
+    </div>
+  </aside>
+</div>
+
+<footer>Made for Hackathon • Colors: Red & Blue • Replace Firebase config to enable realtime features</footer>
+
+<!-- -------------------------
+  Firebase SDKs (include your project's chosen SDK)
+  Replace the config below with your project's config object.
+---------------------------- -->
+<!-- Example: for quick testing you can use Firebase v8 CDN scripts (compat style). 
+     In production prefer modular v9+ and secure server-side rules. -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<script>
+/* -----------------------
+   Replace with YOUR Firebase config
+   In Firebase console -> Project settings -> SDK snippet
+   ----------------------- */
+const firebaseConfig = {
+  apiKey: "REPLACE_WITH_YOUR_APIKEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT.firebaseio.com",
+  projectId: "YOUR_PROJECT",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "SENDER_ID",
+  appId: "APP_ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+/* -----------------------
+   Demo data & structures
+   questionsByTopic: fallback questions; your AI generator can write to same shape
+   Each question: { id, text, options: [..], correctIndex (0-based), marks }
+   ----------------------- */
+const questionsByTopic = {
+  python_basics: [
+    {id:'py1', text:'What is the extension for Python files?', options:['.py','.java','.js'], correctIndex:0, marks:1},
+    {id:'py2', text:'Which keyword defines a function in Python?', options:['func','def','function'], correctIndex:1, marks:1},
+    {id:'py3', text:'Which data type is immutable?', options:['list','tuple','set'], correctIndex:1, marks:1},
+    {id:'py4', text:'What does len("hello") return?', options:['4','5','6'], correctIndex:1, marks:1},
+    {id:'py5', text:'Which operator is used for exponentiation?', options:['^','**','pow()'], correctIndex:1, marks:1},
+    {id:'py6', text:'How to start a for-loop?', options:['for x in items:','foreach(items)', 'for(i=0;i<n;i++)'], correctIndex:0, marks:1},
+    {id:'py7', text:'How to write comments?', options:['// comment','# comment','/* comment */'], correctIndex:1, marks:1},
+    {id:'py8', text:'Which is used to create a set?', options:['[]','()','{}'], correctIndex:2, marks:1},
+    {id:'py9', text:'Which keyword is used to handle exceptions?', options:['try','catch','except'], correctIndex:0, marks:1},
+    {id:'py10', text:'Which method converts to lowercase?', options:['lower()','toLowerCase()','small()'], correctIndex:0, marks:1}
+  ],
+  js_basics: [
+    {id:'js1', text:'Which keyword declares a block-scoped variable?', options:['var','let','const'], correctIndex:1, marks:1},
+    {id:'js2', text:'Which symbol is used for comments?', options:['//','#','<!-- -->'], correctIndex:0, marks:1},
+    // add more...
+  ],
+  data_structures: [
+    {id:'ds1', text:'Which data structure uses FIFO?', options:['Stack','Queue','Tree'], correctIndex:1, marks:1},
+    // add more...
+  ],
+  ai_intro: [
+    {id:'ai1', text:'Which algorithm is supervised?', options:['Kmeans','Linear Regression','Apriori'], correctIndex:1, marks:1},
+    // add more...
+  ]
+};
+
+/* -----------------------
+   App state
+------------------------*/
+let currentTopic = '';
+let questions = [];
+let answers = {}; // { qid: selectedIndex }
+let currentIndex = 0;
+let globalSecondsLeft = 0;
+let perQuestionSeconds = 30;
+let globalTimerInterval = null;
+let questionTimerInterval = null;
+let perQuestionLeft = 0;
+
+/* -----------------------
+   UI references
+------------------------*/
+const startBtn = document.getElementById('startBtn');
+const genAIbtn = document.getElementById('genAIbtn');
+const topicSelect = document.getElementById('topicSelect');
+const nameInput = document.getElementById('name');
+const sidInput = document.getElementById('sid');
+
+const quizArea = document.getElementById('quizArea');
+const currentTopicSpan = document.getElementById('currentTopic');
+const currentStudentSpan = document.getElementById('currentStudent');
+const questionBlock = document.getElementById('questionBlock');
+const qIndexSpan = document.getElementById('qIndex');
+const qTotalSpan = document.getElementById('qTotal');
+const qTimerSpan = document.getElementById('qTimer');
+const globalTimerSpan = document.getElementById('globalTimer');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const submitBtn = document.getElementById('submitBtn');
+const resultBox = document.getElementById('resultBox');
+const leaderboardDiv = document.getElementById('leaderboard');
+
+/* -----------------------
+   Helpers: render question
+------------------------*/
+function renderQuestion(index){
+  if(index < 0) index = 0;
+  if(index >= questions.length) index = questions.length - 1;
+  currentIndex = index;
+  const q = questions[currentIndex];
+  qIndexSpan.textContent = currentIndex + 1;
+  qTotalSpan.textContent = questions.length;
+  questionBlock.innerHTML = `
+    <p>${currentIndex+1}. ${escapeHtml(q.text)}</p>
+    <div class="options" id="optionsList">
+      ${q.options.map((opt, i) => `<div class="option" data-i="${i}" data-qid="${q.id}">${escapeHtml(opt)}</div>`).join('')}
+    </div>
+  `;
+  // mark selected
+  const optEls = Array.from(document.querySelectorAll('.option'));
+  optEls.forEach(el=>{
+    const qi = el.dataset.i;
+    if(answers[q.id] !== undefined && parseInt(qi) === answers[q.id]) el.classList.add('selected');
+    el.onclick = () => {
+      answers[q.id] = parseInt(el.dataset.i);
+      // visual
+      optEls.forEach(o => o.classList.remove('selected'));
+      el.classList.add('selected');
+      // optionally auto-move to next question
+      // setTimeout(()=> goNext(), 250);
+    }
+  });
+
+  // reset per-question timer
+  resetQuestionTimer();
+}
+
+/* -----------------------
+   Timer logic
+------------------------*/
+function startGlobalTimer(minutes){
+  stopGlobalTimer();
+  globalSecondsLeft = Math.max(1, parseInt(minutes) * 60);
+  updateGlobalTimerUI();
+  globalTimerInterval = setInterval(()=>{
+    globalSecondsLeft--;
+    if(globalSecondsLeft <= 0){
+      stopGlobalTimer();
+      autoSubmit('Time finished (global)');
+    }
+    updateGlobalTimerUI();
+  },1000);
+}
+function stopGlobalTimer(){
+  if(globalTimerInterval) clearInterval(globalTimerInterval);
+  globalTimerInterval = null;
+}
+function updateGlobalTimerUI(){
+  const mm = String(Math.floor(globalSecondsLeft/60)).padStart(2,'0');
+  const ss = String(globalSecondsLeft % 60).padStart(2,'0');
+  globalTimerSpan.textContent = `${mm}:${ss}`;
+}
+
+/* per question timer */
+function resetQuestionTimer(){
+  if(questionTimerInterval) clearInterval(questionTimerInterval);
+  perQuestionSeconds = parseInt(document.getElementById('qTime').value || 30);
+  perQuestionLeft = perQuestionSeconds;
+  qTimerSpan.textContent = String(perQuestionLeft);
+  questionTimerInterval = setInterval(()=>{
+    perQuestionLeft--;
+    qTimerSpan.textContent = String(perQuestionLeft);
+    if(perQuestionLeft <= 0){
+      clearInterval(questionTimerInterval);
+      // auto-next
+      goNext(true);
+    }
+  },1000);
+}
+
+/* -----------------------
+   Navigation helpers
+------------------------*/
+function goNext(auto=false){
+  if(currentIndex < questions.length - 1){
+    renderQuestion(currentIndex + 1);
+  } else {
+    // last question: if auto triggered by per-question timeout, submit
+    if(auto) autoSubmit('Per-question timeout reached');
+  }
+}
+function goPrev(){
+  if(currentIndex > 0) renderQuestion(currentIndex - 1);
+}
+
+/* -----------------------
+   Scoring & submit
+------------------------*/
+function calculateScore(){
+  let marks = 0;
+  let totalMarks = 0;
+  questions.forEach(q=>{
+    totalMarks += (q.marks || 1);
+    const sel = answers[q.id];
+    if(sel !== undefined && sel === q.correctIndex){
+      marks += (q.marks || 1);
+    }
+  });
+  const percentage = (totalMarks === 0) ? 0 : (marks / totalMarks) * 100;
+  return {marks, totalMarks, percentage};
+}
+
+function sendScoreToFirebase(payload){
+  // payload: { name, sid, topic, marks, totalMarks, percentage, timestamp }
+  const topicNode = `leaderboard/${payload.topic}`;
+  // push new score
+  db.ref(topicNode).push(payload)
+    .then(()=> console.log('Score pushed to Firebase'))
+    .catch(err => console.error('Firebase push error', err));
+}
+
+function autoSubmit(reason){
+  // stop timers
+  stopGlobalTimer();
+  if(questionTimerInterval) clearInterval(questionTimerInterval);
+
+  const s = calculateScore();
+  const name = (nameInput.value || 'Anonymous').trim();
+  const sid = (sidInput.value || 'NA').trim();
+  const payload = {
+    name, sid, topic: currentTopic, marks: s.marks, totalMarks: s.totalMarks, percentage: Math.round(s.percentage*100)/100,
+    reason, ts: Date.now()
+  };
+  // show to current user
+  showResult(payload);
+  // send to firebase
+  sendScoreToFirebase(payload);
+}
+
+function showResult(payload){
+  quizArea.querySelectorAll('button, .option, select, input').forEach(el => el.disabled = true);
+  resultBox.style.display = 'block';
+  resultBox.innerHTML = `
+    <div style="font-weight:800; color:var(--blue)">Result</div>
+    <div style="margin-top:8px"><strong>${escapeHtml(payload.name)}</strong> (ID: ${escapeHtml(payload.sid)})</div>
+    <div style="margin-top:8px">Marks: <strong>${payload.marks}</strong> / ${payload.totalMarks}</div>
+    <div>Percentage: <strong>${payload.percentage}%</strong></div>
+    <div class="small" style="margin-top:8px">Submitted: ${new Date(payload.ts).toLocaleString()}</div>
+  `;
+}
+
+/* -----------------------
+   Leaderboard: realtime listener
+------------------------*/
+let currentLeaderboardRef = null;
+function attachLeaderboardListener(topic){
+  // detach previous
+  if(currentLeaderboardRef) { currentLeaderboardRef.off(); currentLeaderboardRef = null; }
+  const node = `leaderboard/${topic}`;
+  currentLeaderboardRef = db.ref(node);
+  // order by marks descending — Realtime DB doesn't directly sort on push keys, store marks as child and then use query
+  // For simplicity, fetch top N on value change and sort client-side
+  currentLeaderboardRef.on('value', snapshot=>{
+    const data = snapshot.val() || {};
+    const arr = Object.values(data).map(entry => ({
+      name: entry.name || 'Anonymous',
+      sid: entry.sid || '',
+      marks: Number(entry.marks) || 0,
+      totalMarks: Number(entry.totalMarks) || 0,
+      percentage: Number(entry.percentage) || 0,
+      ts: entry.ts || 0
+    }));
+    // sort
+    arr.sort((a,b) => b.marks - a.marks || b.percentage - a.percentage || b.ts - a.ts);
+    renderLeaderboard(arr.slice(0,20));
+  });
+}
+
+function renderLeaderboard(arr){
+  if(arr.length === 0){
+    leaderboardDiv.innerHTML = `<div class="small">No scores yet for this topic.</div>`;
+    return;
+  }
+  leaderboardDiv.innerHTML = arr.map((r,i) => `
+    <div class="lb-item">
+      <div><strong>${i+1}. ${escapeHtml(r.name)}</strong><div class="small">ID: ${escapeHtml(r.sid)}</div></div>
+      <div style="text-align:right"><div><strong>${r.marks}/${r.totalMarks}</strong></div><div class="small">${r.percentage}%</div></div>
+    </div>
+  `).join('');
+}
+
+/* -----------------------
+   Start quiz flow
+------------------------*/
+startBtn.onclick = () => {
+  const name = nameInput.value.trim();
+  const sid = sidInput.value.trim();
+  const t = topicSelect.value;
+  if(!name || !sid || !t){
+    alert('Please enter name, ID and choose a topic.');
+    return;
+  }
+  currentTopic = t;
+  currentTopicSpan.textContent = topicSelect.options[topicSelect.selectedIndex].text;
+  currentStudentSpan.textContent = `${name} (${sid})`;
+  // load questions for topic (if you have AI-generated ones, they should be written to questionsByTopic or fetched from backend)
+  questions = (questionsByTopic[t] || []).slice();
+  if(questions.length < 5){
+    // fallback: duplicate / generate simple placeholders
+    while(questions.length < 10){
+      questions.push({
+        id: 'f_' + questions.length,
+        text: `Placeholder question ${questions.length+1} (add more or generate via AI)`,
+        options:['Option A','Option B','Option C'],
+        correctIndex:0,
+        marks:1
+      });
+    }
+  }
+  // init answers, UI
+  answers = {};
+  renderQuestion(0);
+  quizArea.style.display = 'block';
+  resultBox.style.display = 'none';
+  // enable UI
+  quizArea.querySelectorAll('button, .option, select, input').forEach(el => el.disabled = false);
+  // start global timer
+  const qMinutes = Math.max(1, parseInt(document.getElementById('quizTime').value || 5));
+  startGlobalTimer(qMinutes);
+  attachLeaderboardListener(currentTopic);
+};
+
+/* prev/next/submit */
+prevBtn.onclick = goPrev;
+nextBtn.onclick = ()=> goNext(false);
+submitBtn.onclick = ()=> {
+  if(!confirm('Submit quiz now?')) return;
+  autoSubmit('Manual submit');
+};
+
+/* Escape helper */
+function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* -----------------------
+   AI questions generation hook
+   This is only a placeholder — you need to create your own backend endpoint that:
+   - Calls OpenAI (or another AI) to generate Qs
+   - Saves them to Firebase at /ai_questions/{topic} OR returns them to the client
+   Example (pseudo):
+    POST /generate-questions  { topic: 'python_basics', count: 10 }
+    -> returns [{id,text,options,correctIndex,marks},...]
+   After generation, you can update questionsByTopic or push to Firebase.
+------------------------*/
+genAIbtn.onclick = async () => {
+  const t = topicSelect.value;
+  if(!t){ alert('Select topic to generate questions for.'); return; }
+  genAIbtn.disabled = true;
+  genAIbtn.textContent = 'Generating...';
+  try{
+    // Example: call your backend API (not included here)
+    // const resp = await fetch('/api/generate-questions',{method:'POST', body:JSON.stringify({topic:t,count:10})});
+    // const data = await resp.json();
+    // questionsByTopic[t] = data.questions;
+
+    // For demo: simply shuffle existing questions and duplicate variations
+    questionsByTopic[t] = (questionsByTopic[t] || []).concat().slice(0,10);
+    alert('AI generation hook executed (demo). Replace client hook with your backend call.');
+  }catch(e){
+    console.error(e);
+    alert('AI generation failed. Check console.');
+  } finally {
+    genAIbtn.disabled = false;
+    genAIbtn.textContent = 'Generate AI Questions';
+  }
+};
+
+/* -----------------------
+   Utility: keep leaderboard reactive when topic changes
+------------------------*/
+topicSelect.onchange = () => {
+  const t = topicSelect.value;
+  if(t){
+    attachLeaderboardListener(t);
+  }
+};
+
+/* On page load: optionally attach default leaderboard */
+if(topicSelect.value) attachLeaderboardListener(topicSelect.value);
+
+</script>
+</body>
+</html>

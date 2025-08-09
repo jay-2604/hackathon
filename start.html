@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Start Quiz</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="card">
+    <h2>Start Quiz</h2>
+    <label>Student Name</label>
+    <input id="name" type="text" placeholder="Your full name" />
+    <label>Student ID</label>
+    <input id="sid" type="text" placeholder="ID / Roll no" />
+    <label>Select Topic</label>
+    <select id="topicSelect">
+      <option value="" disabled selected>Choose a topic</option>
+      <option value="python_basics">Python Basics</option>
+      <option value="js_basics">JavaScript Basics</option>
+      <option value="data_structures">Data Structures</option>
+      <option value="ai_intro">AI / ML Intro</option>
+    </select>
+    <label>Quiz Time (minutes)</label>
+    <input id="quizTime" type="text" value="5" />
+    <label>Per-question (sec)</label>
+    <input id="qTime" type="text" value="30" />
+
+    <button class="primary" id="startBtn">Start Quiz</button>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

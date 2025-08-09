@@ -186,12 +186,23 @@ const resultBox = document.getElementById('resultBox');
 if(resultBox){
   const res = loadState('resultData');
   if(!res){ window.location.href = "start.html"; }
+  // Calculate percentage for the pie chart
+  const percentage = res.percentage.toFixed(2);
+  const correctPercentage = parseFloat(percentage);
+  const incorrectPercentage = 100 - correctPercentage;
   resultBox.innerHTML = `
-    <div style="font-weight:800; color:var(--blue)">Result</div>
-    <div style="margin-top:8px"><strong>${res.name}</strong> (ID: ${res.sid})</div>
-    <div style="margin-top:8px">Marks: <strong>${res.marks}</strong> / ${res.totalMarks}</div>
-    <div>Percentage: <strong>${res.percentage.toFixed(2)}%</strong></div>
-    <div class="small" style="margin-top:8px">Submitted: ${new Date(res.ts).toLocaleString()}</div>
-    <div class="small" style="margin-top:8px">Reason: ${res.reason}</div>
+    <div style="font-weight:800; color:var(--blue); text-align: center; margin-bottom: 20px;"></div>
+    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+      <div style="flex: 1;">
+        <div style="margin-top:8px;"><strong>${res.name}</strong> (ID: ${res.sid})</div>
+        <div class="small" style="margin-top:8px;">Submitted: ${new Date(res.ts).toLocaleString()}</div>
+        <div class="small" style="margin-top:8px;">Reason: ${res.reason}</div>
+      </div>
+      <div style="flex: 0 0 120px; text-align: center;">
+        <div style="width: 100px; height: 100px; border-radius: 50%; background: conic-gradient(var(--blue) 0% ${correctPercentage}%, var(--red) ${correctPercentage}% 100%); margin: 0 auto;"></div>
+        <div style="margin-top: 10px; font-weight: bold;">${percentage}%</div>
+        <div style="margin-top: 8px;">Marks: <strong>${res.marks}</strong> / ${res.totalMarks}</div>
+      </div>
+    </div>
   `;
 }
